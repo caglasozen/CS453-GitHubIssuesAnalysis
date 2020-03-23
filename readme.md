@@ -11,7 +11,11 @@ Components and functionalities for providing a successful, detailed and collabor
 
 ### Group Members ###
 Merve Kılıçarslan 21603434 
+
 Yağız Efe Mertol 21601798 
+
 Ege Özcan 21602150 
+
 Murat Tüver 21602388 
+
 Çağla Sözen 21602547
