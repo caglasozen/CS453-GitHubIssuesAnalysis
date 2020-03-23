@@ -1,4 +1,4 @@
-#ISSUE TRACKING WITH GITHUB ISSUES#
+# ISSUE TRACKING WITH GITHUB ISSUES #
 
 GitHub Issues is a built-in tool provided by GitHub for tracking tasks and bugs of a project in a GitHub repository. 
 Each repository in GitHub has its own Issues section. 
