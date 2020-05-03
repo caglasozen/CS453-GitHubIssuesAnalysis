@@ -2,10 +2,10 @@ from github import Github
 
 # First create a Github instance
 # using an access token
-g = Github("2f2c87baa90e1690fa6dc0a2333fdd8678ee7fdc")
+g = Github("80b5100fda8118cdb67123d2520dca445260b55c")
 
 # Get the desired repo
-repo = g.get_repo("microsoft/vscode")
+repo = g.get_repo("tensorflow/magenta")
 
 print "Fetching Data for ", repo.full_name.upper() , "Repository... \n"
 
@@ -73,8 +73,8 @@ print "Commit Count",all_commits.totalCount, "\n"
 
 #PROJECT INFO
 print "----Project Data-----"
-all_projects = repo.get_projects()
-print "Project Count",all_projects.totalCount, "\n"
+#all_projects = repo.get_projects()
+#print "Project Count",all_projects.totalCount, "\n"
 
 #CONTRIBUTOR INFO
 print "----Contributor Data-----"
