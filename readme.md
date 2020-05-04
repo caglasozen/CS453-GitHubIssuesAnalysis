@@ -4,7 +4,7 @@ GitHub Issues is a built-in tool provided by GitHub for tracking tasks and bugs 
 Each repository in GitHub has its own Issues section. 
 This term project will analyse the tool as a Bug Tracking Tool which is one of its main functionalities. 
 Distinguishably, it specializes on collaboration, references and text formatting.
-Information on the issue data of a project can be fetched and analyzed using the GitHub REST API.
+Information on the issue data of a project can be fetched and analyzed using the PyGitHub.
 Components and functionalities for providing a successful, detailed and collaborative Bug Tracking service is explained in the proceeding subsections.
 
 ## Group 1C ##
