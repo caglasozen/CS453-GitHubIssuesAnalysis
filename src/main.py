@@ -3,7 +3,7 @@ from analyseIssueData import AnalyseIssues
 
 # First create a Github instance
 # using an access token
-g = Github("80b5100fda8118cdb67123d2520dca445260b55c")
+g = Github("******************")
 repo_add = "tensorflow/magenta"
 
 analyse_tool = AnalyseIssues(g, repo_add)
