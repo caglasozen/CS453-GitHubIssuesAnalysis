@@ -149,6 +149,7 @@ class AnalyseIssues:
         for i in range(self.closed_issues.totalCount):
             issue = self.closed_issues[i]
             if issue.pull_request is not None:
+                print(i)
                 curr_PR = issue.as_pull_request()
                 if curr_PR.merged is True:
                     date = (issue.closed_at - curr_PR.merged_at).seconds
@@ -159,7 +160,7 @@ class AnalyseIssues:
         print "- Sample Issue:", issues_PR[2], " Labels: ", issues_PR[2].labels, ", State:", issues_PR[2].state
         print "- Sample Issue:", issues_PR[4], " Labels: ", issues_PR[4].labels, ", State:", issues_PR[4].state
 
-        data = [self.all_issues.totalCount - len(issues_PR), len(issues_PR)]
+        data = [self.closed_issues.totalCount - len(issues_PR), len(issues_PR)]
         categ = ["Issues closed after their Pull Request/Commit", "Issues closed before their Pull Request/Commit"]
 
         self.drawPieChart(data, categ, "PROCESS SMELL 9.2.3 : Issues closed before their Pull Request/Commit")
