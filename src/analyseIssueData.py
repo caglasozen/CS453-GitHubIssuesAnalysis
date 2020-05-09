@@ -1,5 +1,8 @@
 from github import Github
 from datetime import datetime
+import matplotlib.pyplot as plt
+import numpy as np
+
 class AnalyseIssues:
 
     def __init__(self, git, repo_add):
@@ -9,7 +12,8 @@ class AnalyseIssues:
         self.all_issues = self.repo.get_issues(state='all')
         self.closed_issues = self.repo.get_issues(state='closed')
         self.open_issues = self.repo.get_issues(state='open')
-
+        self.pulls = self.repo.get_pulls(state='merged')
+        self.colors = ['#2d026d', '#704a9c', '#af90cd', '#eedbff']
 
     def getRepoInfo(self):
         print "Fetching Data for ", self.repo.full_name.upper() , "Repository... \n"
@@ -57,7 +61,9 @@ class AnalyseIssues:
         open_issues = self.repo.get_issues(state='open', assignee="none")
         closed_issues = self.repo.get_issues(state='closed', assignee="none")
 
-        print "- Number of Issues without any assignees in total", (open_issues.totalCount + closed_issues.totalCount)
+        unassigned_issues = closed_issues.totalCount + open_issues.totalCount
+
+        print "- Number of Issues without any assignees in total", (unassigned_issues)
         print "- Number of Open Issues without any assignees", open_issues.totalCount
         print "- Number of Closed Issues without any assignees", closed_issues.totalCount
 
@@ -66,6 +72,10 @@ class AnalyseIssues:
         print "- Sample Issue:", closed_issues[102] , " Assignees: ", closed_issues[3].assignee, ", State:", closed_issues[102].state
         print "- Sample Issue:", closed_issues[40] , " Assignees: ", closed_issues[3].assignee, ", State:", closed_issues[40].state
 
+        data = [self.all_issues.totalCount-unassigned_issues, open_issues.totalCount, closed_issues.totalCount]
+        categ = ["Assigned Issues","Open Unassigned Issues", "Closed Unassigned Issues"]
+
+        self.drawPieChart(data,categ, "PROCESS SMELL 9.2.1: Assigned Issues vs. Unassigned Issues" )
         print "\n"
         return
 
@@ -76,7 +86,9 @@ class AnalyseIssues:
         open_issues = self.repo.get_issues(state='open', labels=[])
         closed_issues = self.repo.get_issues(state='closed', labels=[])
 
-        print "- Number of Issues without any labels in total", (open_issues.totalCount + closed_issues.totalCount)
+        unlabeled_issues = closed_issues.totalCount + open_issues.totalCount
+
+        print "- Number of Issues without any labels in total", unlabeled_issues
         print "- Number of Open Issues without any labels", open_issues.totalCount
         print "- Number of Closed Issues without any labels", closed_issues.totalCount
 
@@ -84,6 +96,11 @@ class AnalyseIssues:
         print "- Sample Issue:", open_issues[15], " Labels: ", open_issues[15].labels, ", State:", open_issues[15].state
         print "- Sample Issue:", closed_issues[102], " Labels: ", closed_issues[102].labels, ", State:", closed_issues[102].state
         print "- Sample Issue:", closed_issues[41], " Labels: ", closed_issues[41].labels, ", State:", closed_issues[41].state
+
+        data = [self.all_issues.totalCount - unlabeled_issues, open_issues.totalCount, closed_issues.totalCount]
+        categ = ["Labeled Issues", "Open Unlabeled Issues", "Closed Unlabeled Issues"]
+
+        self.drawPieChart(data, categ, "PROCESS SMELL 9.2.2: Labeled Issues vs. Unlabeled Issues")
 
         print "\n"
 
@@ -105,6 +122,11 @@ class AnalyseIssues:
         print "- Issues closed before their Pull Request/Commit ", len(issues_PR)
         print "- Sample Issue:", issues_PR[2], " Labels: ", issues_PR[2].labels, ", State:", issues_PR[2].state
         print "- Sample Issue:", issues_PR[4], " Labels: ", issues_PR[4].labels, ", State:", issues_PR[4].state
+
+        data = [self.all_issues.totalCount - len(issues_PR), len(issues_PR)]
+        categ = ["Issues closed after their Pull Request/Commit", "Issues closed before their Pull Request/Commit"]
+
+        self.drawPieChart(data, categ, "PROCESS SMELL 9.2.3 : Issues closed before their Pull Request/Commit")
 
         print "\n"
 
@@ -188,3 +210,18 @@ class AnalyseIssues:
         print "\n"
 
         return
+
+    def func(self, pct, allvals):
+        absolute = int(pct / 100. * np.sum(allvals))
+        return "{:.1f}%\n({:d})".format(pct, absolute)
+
+    def drawPieChart(self, data, categ, plot_name):
+        fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
+        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self.func(pct, data), textprops=dict(color="w"), colors = self.colors)
+        ax.legend(wedges, categ, title="Issues", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
+        plt.setp(autotexts, size=8, weight="bold")
+        ax.set_title(plot_name)
+
+        plt.show()
+        return
+
