@@ -2,6 +2,7 @@ from github import Github
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+import github.GithubObject
 
 class AnalyseIssues:
 
@@ -14,6 +15,8 @@ class AnalyseIssues:
         self.open_issues = self.repo.get_issues(state='open')
         self.pulls = self.repo.get_pulls(state='merged')
         self.colors = ['#2d026d', '#704a9c', '#af90cd', '#eedbff']
+        self.labels = self.repo.get_labels()
+
 
     def getRepoInfo(self):
         print "Fetching Data for ", self.repo.full_name.upper() , "Repository... \n"
@@ -28,6 +31,7 @@ class AnalyseIssues:
         print "- Commit Count", all_commits.totalCount, "\n"
 
         print "- Total Issue Count", self.all_issues.totalCount
+
         return
 
     def getProjectInfo(self):
@@ -83,21 +87,53 @@ class AnalyseIssues:
 
         print "-- PROCESS SMELL 9.2.2: Unlabeled Issues ", "\n"
 
-        open_issues = self.repo.get_issues(state='open', labels=[])
-        closed_issues = self.repo.get_issues(state='closed', labels=[])
+        open_issues = []
+        closed_issues = []
+        unlabeled_open = []
+        unlabeled_closed = []
+        labeled = False
 
-        unlabeled_issues = closed_issues.totalCount + open_issues.totalCount
+        for label in self.labels:
+            issues = self.repo.get_issues(state='open', labels=[label])
+            count = len(open_issues)
+            for issue in issues:
+                open_issues.append(issue)
+
+        for issue in self.open_issues:
+            labeled = False
+            for issue_2 in open_issues:
+                if issue.number == issue_2.number:
+                    labeled = True
+            if labeled is False:
+                unlabeled_open.append(issue)
+
+        for label in self.labels:
+            issues = self.repo.get_issues(state='closed', labels=[label])
+            for issue in issues:
+                closed_issues.append(issue)
+
+        for issue in self.closed_issues:
+            labeled = False
+            for issue_2 in closed_issues:
+                if issue.number == issue_2.number:
+                    labeled = True
+            if labeled is False:
+                unlabeled_closed.append(issue)
+
+        labeled_issues = len(closed_issues) + len(open_issues)
+        unlabeled_issues = len(unlabeled_open) + len(unlabeled_closed)
+
 
         print "- Number of Issues without any labels in total", unlabeled_issues
-        print "- Number of Open Issues without any labels", open_issues.totalCount
-        print "- Number of Closed Issues without any labels", closed_issues.totalCount
+        print "- Number of Open Issues without any labels", len(unlabeled_open)
+        print "- Number of Closed Issues without any labels", len(unlabeled_closed)
 
-        print "- Sample Issue:", open_issues[3], " Labels: ", open_issues[3].labels, ", State:", open_issues[3].state
-        print "- Sample Issue:", open_issues[15], " Labels: ", open_issues[15].labels, ", State:", open_issues[15].state
-        print "- Sample Issue:", closed_issues[102], " Labels: ", closed_issues[102].labels, ", State:", closed_issues[102].state
-        print "- Sample Issue:", closed_issues[41], " Labels: ", closed_issues[41].labels, ", State:", closed_issues[41].state
+        print "- Sample Issue:", unlabeled_open[3], " Labels: ", unlabeled_open[3].labels, ", State:", unlabeled_open[3].state
+        print "- Sample Issue:", unlabeled_open[5], " Labels: ", unlabeled_open[15].labels, ", State:", unlabeled_open[15].state
+        print "- Sample Issue:", unlabeled_closed[3], " Labels: ", unlabeled_closed[3].labels, ", State:", unlabeled_closed[3].state
+        print "- Sample Issue:", unlabeled_closed[5], " Labels: ", unlabeled_closed[5].labels, ", State:", unlabeled_closed[5].state
 
-        data = [self.all_issues.totalCount - unlabeled_issues, open_issues.totalCount, closed_issues.totalCount]
+        data = [labeled_issues, len(unlabeled_open), len(unlabeled_closed)]
         categ = ["Labeled Issues", "Open Unlabeled Issues", "Closed Unlabeled Issues"]
 
         self.drawPieChart(data, categ, "PROCESS SMELL 9.2.2: Labeled Issues vs. Unlabeled Issues")

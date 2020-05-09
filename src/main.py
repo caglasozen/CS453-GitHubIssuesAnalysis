@@ -3,7 +3,7 @@ from analyseIssueData import AnalyseIssues
 
 # First create a Github instance
 # using an access token
-g = Github("ce2e0e5cf903c4b39b3be096d5883c934573df1a")
+g = Github("****************************")
 repo_add = "tensorflow/magenta"
 
 analyse_tool = AnalyseIssues(g, repo_add)
@@ -19,11 +19,11 @@ analyse_tool.getRepoInfo()
 
 #Process Smells 9.2.2
 
-#analyse_tool.getUnlabeledIssues()
+analyse_tool.getUnlabeledIssues()
 
 #Process Smells 9.2.3
 
-analyse_tool.getIssuesClosedBeforeFix()
+#analyse_tool.getIssuesClosedBeforeFix()
 
 #Process Smells 9.2.4
 

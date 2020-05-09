@@ -2,7 +2,7 @@ from github import Github
 
 # First create a Github instance
 # using an access token
-g = Github("80b5100fda8118cdb67123d2520dca445260b55c")
+g = Github("****************************")
 
 # Get the desired repo
 repo = g.get_repo("tensorflow/magenta")
