@@ -2,7 +2,7 @@ from github import Github
 
 # First create a Github instance
 # using an access token
-g = Github("****************************")
+g = Github("********************************")
 
 # Get the desired repo
 repo = g.get_repo("tensorflow/magenta")
@@ -17,6 +17,7 @@ print "----Issues Data-----"
 all_issues = repo.get_issues(state='all')
 open_issues = repo.get_issues(state='open')
 closed_issues = repo.get_issues(state='closed')
+
 
 print "Total Issue Count",all_issues.totalCount
 print "Open Issue Count",open_issues.totalCount

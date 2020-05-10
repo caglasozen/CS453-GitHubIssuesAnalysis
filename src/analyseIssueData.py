@@ -2,7 +2,6 @@ from github import Github
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
-import github.GithubObject
 
 class AnalyseIssues:
 
@@ -13,9 +12,10 @@ class AnalyseIssues:
         self.all_issues = self.repo.get_issues(state='all')
         self.closed_issues = self.repo.get_issues(state='closed')
         self.open_issues = self.repo.get_issues(state='open')
-        self.pulls = self.repo.get_pulls(state='merged')
-        self.colors = ['#2d026d', '#704a9c', '#af90cd', '#eedbff']
+        self.pulls = self.repo.get_pulls(state='open')
+        self.colors = ['#008f85', '#3ca289', '#63b68c', '#88c88f', '#aeda93', '#d6ea9a', '#fffaa4', '#fcdd86', '#f9bf6e', '#f4a15c', '#ed8153', '#e2614f', '#d43d51']
         self.labels = self.repo.get_labels()
+        plt.ioff()
 
 
     def getRepoInfo(self):
@@ -80,6 +80,21 @@ class AnalyseIssues:
         categ = ["Assigned Issues","Open Unassigned Issues", "Closed Unassigned Issues"]
 
         self.drawPieChart(data,categ, "PROCESS SMELL 9.2.1: Assigned Issues vs. Unassigned Issues" )
+
+        print "\n"
+
+        #Detailed Analysis#
+
+        #OPEN ISSUES#
+
+        self.det_Analysis(open_issues, "Open Unassigned Issues")
+
+        print "\n"
+
+        #CLOSED ISSUES#
+
+        self.det_Analysis(closed_issues, "Closed Unassigned Issues")
+
         print "\n"
         return
 
@@ -140,16 +155,29 @@ class AnalyseIssues:
 
         print "\n"
 
+        # Detailed Analysis#
+
+        # OPEN ISSUES#
+
+        self.det_Analysis(unlabeled_open, "Open Unlabeled Issues")
+
+        print "\n"
+
+        # CLOSED ISSUES#
+
+        self.det_Analysis(unlabeled_closed, "Closed Unlabeled Issues")
+
+        return
+
     def getIssuesClosedBeforeFix(self):
 
         print "-- PROCESS SMELL 9.2.3 : Issues closed before their Pull Request/Commit", "\n"
 
         issues_PR = []
 
-        for i in range(self.closed_issues.totalCount):
+        for i in range(self.closed_issues.totalCount/4):
             issue = self.closed_issues[i]
             if issue.pull_request is not None:
-                print(i)
                 curr_PR = issue.as_pull_request()
                 if curr_PR.merged is True:
                     date = (issue.closed_at - curr_PR.merged_at).seconds
@@ -164,6 +192,12 @@ class AnalyseIssues:
         categ = ["Issues closed after their Pull Request/Commit", "Issues closed before their Pull Request/Commit"]
 
         self.drawPieChart(data, categ, "PROCESS SMELL 9.2.3 : Issues closed before their Pull Request/Commit")
+
+        print "\n"
+
+        # Detailed Analysis#
+
+        self.det_Analysis(issues_PR, "Issues closed before their Pull Request/Commit")
 
         print "\n"
 
@@ -191,6 +225,12 @@ class AnalyseIssues:
 
         print "\n"
 
+        # Detailed Analysis#
+
+        self.det_Analysis(issues_PR, "Issues not closed by a commit or a PR")
+
+        print "\n"
+
         return
 
     def getIdle(self):
@@ -215,34 +255,39 @@ class AnalyseIssues:
 
         print "\n"
 
+        # Detailed Analysis#
+
+        self.det_Analysis(issues_PR, "Issues idle for over a year")
+
+        print "\n"
+
         return
 
     def getIncompPRReview(self):
 
-        print "-- PROCESS SMELL 9.2.6 : Incomplete PR Review for over 3 months", "\n"
-
-        t = datetime.utcnow()
+        print "-- PROCESS SMELL 9.2.6 : PR Review Request not addressed for over 3 months", "\n"
 
         issues_PR = []
+        t = datetime.utcnow()
 
-        for i in range(self.open_issues.totalCount):
-            issue = self.open_issues[i]
+        for issue in self.open_issues:
+            issue_event = issue.get_events()
+            for event in issue_event:
+                if event.event == "review_requested":
+                    date_created = event.created_at
+                    date = (t-date_created).days
+                    if 90 < date:
+                        issues_PR.append(issue)
 
-            if issue.pull_request is not None:
-                curr_PR = issue.as_pull_request()
-                reviews = curr_PR.get_reviews()
-
-                if reviews is not None:
-                    for review in reviews:
-                        submit_time = review.submitted_at
-
-                        date = (t - submit_time).days
-                        if 365 < date:
-                            issues_PR.append(issue)
-
-        print "- Number of Issues with idle PR Review for over year: ", len(issues_PR)
+        print "- Number of Issues with idle PR Review for 3 months: ", len(issues_PR)
         print "- Sample Issue:", issues_PR[2], " Created at: ", issues_PR[2].created_at, ", State:", issues_PR[2].state
         print "- Sample Issue:", issues_PR[8], " Created at: ", issues_PR[8].created_at, ", State:", issues_PR[8].state
+
+        print "\n"
+
+        # Detailed Analysis#
+
+        self.det_Analysis(issues_PR, "PR Review Request not addressed for over 3 months")
 
         print "\n"
 
@@ -250,15 +295,84 @@ class AnalyseIssues:
 
     def func(self, pct, allvals):
         absolute = int(pct / 100. * np.sum(allvals))
-        return "{:.1f}%\n({:d})".format(pct, absolute)
+
+        if absolute == 0:
+            return ''
+
+        return "{:.1f}%".format(pct)
 
     def drawPieChart(self, data, categ, plot_name):
-        fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self.func(pct, data), textprops=dict(color="w"), colors = self.colors)
-        ax.legend(wedges, categ, title="Issues", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
-        plt.setp(autotexts, size=8, weight="bold")
-        ax.set_title(plot_name)
+        fig, ax = plt.subplots(figsize=(12, 4), subplot_kw=dict(aspect="equal"))
+        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self.func(pct, data), textprops=dict(color="w"), colors = self.colors, radius = 1.235)
 
+        labels = ['%s: %i' % (l, v) for l, v in zip(categ, data)]
+
+        ax.legend(wedges, labels, title="Categories", loc="center left", bbox_to_anchor=(1.1, 0, 0.5, 1))
+        plt.setp(autotexts, size=8)
+        ax.set_title(plot_name)
         plt.show()
+
+        #plt.savefig("../out/" + plot_name + ".png")
+
         return
 
+    def det_Analysis(self, issues, title):
+        no_body, short_body, med_body, long_body, no_PR, with_PR, duplicate, merged, referenced, lot_comm, few_comm, med_comm, assigned, unassigned = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 03
+
+        for issue in issues:
+
+            if issue.body is None:
+                no_body += 1
+            else:
+                body_len = len(issue.body)
+
+                if body_len <= 250:
+                    short_body += 1
+                elif 250 < body_len and body_len <= 500:
+                    med_body += 1
+                else:
+                    long_body += 1
+
+            comments = issue.comments
+
+            if comments is None or comments <= 10:
+                few_comm += 1
+            elif 10 < comments and comments <= 30:
+                med_comm += 1
+            else:
+                lot_comm += 1
+
+            if issue.pull_request is None:
+                no_PR += 1
+            else:
+                with_PR += 1
+
+            if (title != "Open Unassigned Issues") and (title != "Closed Unassigned Issues") :
+                if issue.assignee is None: unassigned += 1
+                else: assigned += 1
+
+            issue_events = issue.get_events()
+
+            for event in issue_events:
+                if event == "marked_as_duplicate":
+                    duplicate += 1
+                if event == "merged":
+                    merged += 1
+                if event == "referenced":
+                    referenced += 1
+
+        if (title == "Open Unassigned Issues") or (title == "Closed Unassigned Issues"):
+            data = [short_body, med_body, long_body, no_PR, with_PR, duplicate, merged, referenced, lot_comm, few_comm,
+                    med_comm]
+            categ = ["Short Body", "Medium Body", "Long Body", "No PR", "With PR", "Duplicate", "Merged", "Referenced",
+                     "Few Comments", "Medium Comments", "A Lot of Comments"]
+
+        else:
+            data = [short_body, med_body, long_body, no_PR, with_PR, duplicate, merged, referenced, lot_comm, few_comm,
+                    med_comm, assigned, unassigned]
+            categ = ["Short Body", "Medium Body", "Long Body", "No PR", "With PR", "Duplicate", "Merged", "Referenced",
+                     "Few Comments", "Medium Comments", "A Lot of Comments", "No Assignee", "Assigned"]
+
+        self.drawPieChart(data, categ, title)
+
+        return
